@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتايجك الجينية – DeepAncestry™ AdmixLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root { --primary: #00d4ff; --gold: #ffd700; --dark: #0f0c29; --light: rgba(255,255,255,0.1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #0f0c29 0%, #0a0720 100%); color: #fff; min-height: 100vh; }
+        
+        .top-menu { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(10,7,32,0.9); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(0,212,255,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; z-index: 9999; }
+        .logo { font-size: 24px; font-weight: 900; background: linear-gradient(45deg, var(--primary), var(--gold)); -webkit-background-clip: text; color: transparent; }
+        
+        .container { max-width: 1300px; margin: 100px auto 40px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .card { background: var(--light); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.4s; }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 25px 60px rgba(0,234,255,0.25); }
+        .full-width { grid-column: span 2; }
+
+        .kit-info { font-size: 36px; color: var(--gold); margin-bottom: 25px; text-align: center; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .result-box { background: #000; padding: 25px; border-radius: 18px; font-family: 'Courier New', monospace; font-size: 15px; color: #0f0; height: 420px; overflow-y: auto; border: 1px solid #0f0; line-height: 1.7; box-shadow: inset 0 0 20px rgba(0,255,0,0.1); }
+        #pca-plot, #map { height: 480px; border-radius: 18px; background: rgba(0,0,0,0.35); border: 1px solid rgba(0,212,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        .loading-text { text-align: center; color: var(--gold); font-size: 22px; padding: 50px; animation: pulse 1.5s infinite; text-shadow: 0 0 10px var(--gold); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .btn-download { display: inline-block; width: 100%; padding: 18px; background: linear-gradient(45deg, var(--gold), #b8860b); color: #000; font-weight: 900; border-radius: 14px; text-decoration: none; text-align: center; transition: 0.3s; box-shadow: 0 5px 15px rgba(255,215,0,0.4); }
+        .btn-download:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(255,215,0,0.6); }
+    </style>
+</head>
+<body>
+
+    <nav class="top-menu">
+        <div class="logo">DeepAncestry™<span>AdmixLab</span></div>
+        <a href="/dashboard" style="color:var(--primary); text-decoration:none; font-weight:bold;">← لوحة التحكم</a>
+    </nav>
+
+    <div class="container">
+        <div class="card full-width">
+            <div class="kit-info">كيت رقم: <strong>{{ kit_id }}</strong></div>
+            <h2 style="margin-bottom:15px; color:var(--primary);">سجل التحليل الحي (PLINK Log)</h2>
+            <div id="results" class="result-box">
+                <div class="loading-text">جاري استخراج الحقيقة الجينية... يتم تحليل 1.6 مليون ماركر الآن.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom:15px; color:var(--gold);">الإسقاط الجيني (PCA)</h2>
+            <div id="pca-plot"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom:15px; color:var(--primary);">الموطن الجيني المرجح</h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="card full-width">
+            <a href="/download_coords/{{ kit_id }}" class="btn-download">💾 تحميل ملف الإحداثيات الخام (G25/PCA Format)</a>
+        </div>
+    </div>
+
+    <script>
+        const kitId = "{{ kit_id }}";
+        const userName = "{{ user_name }}";
+        const pc1 = {{ pc1 | default(0) }};
+        const pc2 = {{ pc2 | default(0) }};
+        let mapInstance = null;
+
+        // إذا الإحداثيات موجودة من البداية → ارسم فورًا
+        if (pc1 !== 0 || pc2 !== 0) {
+            drawPCA(pc1, pc2);
+            updateMap(pc1, pc2);
+        }
+
+        // دالة لتحميل النتايج (لو عايز polling إضافي)
+        function loadResults() {
+            fetch(`/get_results/${kitId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('results').innerHTML = html;
+                })
+                .catch(err => console.error('Fetch error:', err));
+        }
+
+        // رسم الـ PCA بـ Plotly (نقطة واحدة + اسم المستخدم)
+        function drawPCA(x, y) {
+            const data = [{
+                x: [x], y: [y],
+                mode: 'markers+text',
+                text: [userName],
+                textposition: 'top center',
+                marker: { color: '#00d4ff', size: 18, symbol: 'diamond', line: {color: '#ffd700', width: 3} },
+                type: 'scatter'
+            }];
+            const layout = {
+                margin: { t: 30, b: 50, l: 50, r: 30 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0.3)',
+                font: { color: '#fff', family: 'Tajawal' },
+                xaxis: { title: 'PC1', gridcolor: '#444', zerolinecolor: '#666' },
+                yaxis: { title: 'PC2', gridcolor: '#444', zerolinecolor: '#666' },
+                showlegend: false
+            };
+            Plotly.newPlot('pca-plot', data, layout);
+        }
+
+        // رسم الخريطة بـ Leaflet (معدل ليكون دقيق أكتر)
+        function updateMap(pc1, pc2) {
+            const lat = 33.5 + (pc2 * 40);  // مركز بلاد الشام
+            const lng = 36.3 + (pc1 * 40);  // مركز الشرق الأوسط
+
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([lat, lng], 5);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap © CARTO'
+                }).addTo(mapInstance);
+            }
+
+            // دائرة حول الموقع الجيني + popup تفاعلي
+            L.circleMarker([lat, lng], {
+                radius: 14,
+                fillColor: "#ffd700",
+                color: "#fff",
+                weight: 3,
+                fillOpacity: 0.85,
+                opacity: 0.9
+            }).addTo(mapInstance)
+              .bindPopup(`<b>الموقع الجيني لـ ${userName}</b><br><br>PC1: ${pc1.toFixed(5)}<br>PC2: ${pc2.toFixed(5)}<br><br><i class="fas fa-dna"></i> أقرب أصل جيني محتمل: بلاد الشام / الرافدين`)
+              .openPopup();
+
+            // تكبير الخريطة تلقائيًا
+            mapInstance.flyTo([lat, lng], 6, {duration: 1.8});
+        }
+
+        // بدء التحديث التلقائي كل 3 ثواني (اختياري)
+        window.resultTimer = setInterval(loadResults, 3000);
+        loadResults();
+    </script>
+</body>
+</html>

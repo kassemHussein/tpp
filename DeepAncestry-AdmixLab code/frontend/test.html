@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | DeepAncestry™ AdmixLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ffd700;
+            --dark: #0f0c29;
+            --card: rgba(255,255,255,0.08);
+            --success: #00ff88;
+            --error: #ff6b6b;
+            --text: #e0f7ff;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark), #0a0720);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0; right: 0;
+            width: 280px; height: 100vh;
+            background: rgba(15,12,41,0.95);
+            padding: 30px 20px;
+            z-index: 1000;
+            border-left: 1px solid rgba(0,212,255,0.25);
+            transition: right 0.4s ease;
+        }
+        .sidebar.closed { right: -280px; }
+        .logo {
+            font-size: 32px; font-weight: 900;
+            text-align: center;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .logo span { font-size: 14px; display: block; color: var(--secondary); opacity: 0.8; letter-spacing: 3px; }
+        .sidebar ul { list-style: none; margin-top: 50px; }
+        .sidebar a {
+            display: flex; align-items: center;
+            padding: 16px 20px; margin: 10px 0;
+            background: rgba(0,212,255,0.08);
+            border-radius: 14px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .sidebar a:hover {
+            background: rgba(0,212,255,0.25);
+            border-color: var(--primary);
+            transform: translateX(-8px);
+        }
+        .sidebar a i { margin-left: 12px; font-size: 20px; }
+        .main-content { margin-right: 280px; padding: 50px 40px; transition: margin-right 0.4s; }
+        .menu-toggle {
+            display: none;
+            position: fixed; top: 20px; right: 20px;
+            font-size: 32px; color: var(--primary);
+            cursor: pointer; z-index: 1100;
+        }
+        h1 {
+            font-size: 42px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 15px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.12);
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,212,255,0.2);
+        }
+        .card h3 { color: var(--secondary); margin-bottom: 12px; font-size: 22px; }
+        .kit-id { font-size: 28px; font-weight: bold; color: var(--primary); }
+        .status-complete { color: var(--success); font-weight: bold; }
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #000;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(0,212,255,0.4); }
+        #map { height: 550px; border-radius: 24px; border: 2px solid rgba(0,212,255,0.35); box-shadow: 0 15px 50px rgba(0,0,0,0.6); margin-top: 30px; }
+        .result-box {
+            background: #000000aa;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 25px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: #0f0;
+            border: 1px solid #0f03;
+        }
+        .loading { text-align: center; font-size: 20px; color: var(--primary); margin: 40px 0; }
+        @media (max-width: 991px) {
+            .sidebar { right: -280px; }
+            .sidebar.open { right: 0; }
+            .main-content { margin-right: 0; }
+            .menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</div>
+
+    <nav class="sidebar">
+        <div class="logo">DeepAncestry™<span>ADMIXLAB</span></div>
+        <ul>
+            <li><a href="/dashboard"><i class="fas fa-home"></i> الرئيسية</a></li>
+            <li><a href="/upload_page"><i class="fas fa-dna"></i> رفع ملف DNA</a></li>
+            <li><a href="/results/latest"><i class="fas fa-chart-bar"></i> آخر نتيجة</a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <h1>مرحباً، {{ user_name }}!</h1>
+        <p style="text-align:center; opacity:0.85; margin-bottom:40px; font-size:20px;">اكتشف أصولك الحقيقية بأدق التحليلات الجينية</p>
+
+        <div class="cards">
+            <div class="card">
+                <h3>تحليل جديد</h3>
+                <p>ارفع ملف DNA الخام للحصول على إحداثيات G25 + نسب Admixture الحقيقية.</p>
+                <a href="/upload_page" class="btn">ابدأ الآن</a>
+            </div>
+
+            <div class="card">
+                <h3>هوية العينة</h3>
+                <p>كيت رقم: <span class="kit-id">{{ kit_id }}</span></p>
+                {% if kit_id != "لا يوجد تحليل بعد" %}
+                    <p class="status-complete">الحالة: اكتملت المعالجة <i class="fas fa-check-circle"></i></p>
+                {% else %}
+                    <p style="color:#ffcc00;">لم تقم برفع أي ملف بعد</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if latest_result and latest_result != "لا توجد نتائج بعد" %}
+            <div class="card">
+                <h3>نتائج التحليل الأخير</h3>
+                <div class="result-box" id="resultContent">
+                    {{ latest_result }}
+                </div>
+                <button onclick="copyToClipboard()" class="btn" style="margin-top:15px;">نسخ الإحداثيات</button>
+            </div>
+        {% endif %}
+
+        <div class="map-container">
+            <h2 style="margin-bottom:20px; color: var(--secondary); text-align:center;">خريطة التوزيع الجغرافي الجيني (Heatmap)</h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="loading" id="loading" style="display:none;">
+            <i class="fas fa-spinner fa-spin" style="font-size:40px; color:var(--primary);"></i>
+            <p style="margin-top:15px;">جاري تحميل النتائج الجديدة...</p>
+        </div>
+    </div>
+
+    <script>
+        // === خريطة Leaflet + Heatmap ===
+        {% set heat_json = heat_points | tojson | safe if heat_points else '[]' %}
+        const realData = {{ heat_json }};
+
+        const fallbackData = [
+            [30.0, 31.0, 0.8], [33.0, 44.0, 0.9], [24.0, 45.0, 0.7], [34.0, 36.0, 0.6]
+        ];
+        const points = realData.length > 0 ? realData : fallbackData;
+
+        const map = L.map('map').setView([30, 35], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        L.heatLayer(points, {
+            radius: 40,
+            blur: 25,
+            maxZoom: 5,
+            gradient: {0.2: '#00d4ff', 0.5: '#ffd700', 1.0: '#ff4444'}
+        }).addTo(map);
+
+        if (points.length > 0) {
+            map.flyTo([points[0][0], points[0][1]], 4, {duration: 2});
+        }
+
+        // === نسخ الإحداثيات ===
+        function copyToClipboard() {
+            const result = document.getElementById('resultContent').innerText;
+            navigator.clipboard.writeText(result).then(() => {
+                alert('تم نسخ النتائج إلى الحافظة!');
+            });
+        }
+
+        // === Polling AJAX لتحديث النتائج تلقائيًا ===
+        let lastResult = "";
+        const pollInterval = setInterval(async () => {
+            if ("{{ kit_id }}" === "لا يوجد تحليل بعد") return;
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch("/get_results/{{ kit_id }}");
+                const newContent = await response.text();
+
+                if (newContent !== lastResult) {
+                    document.getElementById('resultContent').innerHTML = newContent;
+                    lastResult = newContent;
+                    document.getElementById('loading').style.display = 'none';
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        }, 10000);  // تحديث كل 10 ثواني
+    </script>
+</body>
+</html>

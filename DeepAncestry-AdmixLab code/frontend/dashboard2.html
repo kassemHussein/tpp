@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | DeepAncestry™ AdmixLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        :root {
+            --primary: #00eaff;
+            --secondary: #ffd700;
+            --dark: #0a0824;
+            --darker: #050418;
+            --card: rgba(255,255,255,0.07);
+            --success: #00ff9d;
+            --error: #ff6b6b;
+            --text: #f0f8ff;
+            --glow: 0 0 20px rgba(0,234,255,0.6);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--darker), #0c0a2e);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed;
+            top: 0; right: 0;
+            width: 280px; height: 100vh;
+            background: rgba(10,8,36,0.96);
+            backdrop-filter: blur(16px);
+            padding: 30px 20px;
+            z-index: 1000;
+            border-left: 1px solid rgba(0,234,255,0.2);
+            transition: right 0.4s ease;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.6);
+        }
+        .sidebar.closed { right: -280px; }
+        .logo {
+            font-size: 32px; font-weight: 900;
+            text-align: center;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), #ff6bcb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: gradientFlow 8s linear infinite;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .logo span { font-size: 14px; display: block; color: var(--secondary); opacity: 0.85; letter-spacing: 4px; }
+        .sidebar ul { list-style: none; margin-top: 60px; }
+        .sidebar a {
+            display: flex; align-items: center;
+            padding: 16px 20px; margin: 12px 0;
+            background: rgba(0,234,255,0.08);
+            border-radius: 14px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.35s;
+            border: 1px solid transparent;
+        }
+        .sidebar a:hover {
+            background: rgba(0,234,255,0.28);
+            border-color: var(--primary);
+            transform: translateX(-10px);
+            box-shadow: var(--glow);
+        }
+        .sidebar a i { margin-left: 14px; font-size: 22px; }
+        .main-content {
+            margin-right: 280px;
+            padding: 60px 50px;
+            transition: margin-right 0.4s;
+        }
+        .menu-toggle {
+            display: none;
+            position: fixed; top: 25px; right: 25px;
+            font-size: 34px; color: var(--primary);
+            cursor: pointer; z-index: 1100;
+        }
+
+        /* ── Cards & Layout ── */
+        h1 {
+            font-size: 46px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: var(--glow);
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+            margin: 50px 0;
+        }
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(14px);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.45s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 60px rgba(0,234,255,0.25);
+            border-color: var(--primary);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card h3 { color: var(--secondary); margin-bottom: 16px; font-size: 24px; }
+        .kit-id { font-size: 32px; font-weight: 900; color: var(--primary); }
+        .status-complete { color: var(--success); font-weight: bold; font-size: 1.2rem; }
+        .btn {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #000;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-top: 20px;
+            transition: all 0.4s;
+            box-shadow: 0 8px 25px rgba(0,234,255,0.4);
+        }
+        .btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 15px 40px rgba(0,234,255,0.6);
+        }
+
+        /* ── Map ── */
+        #map {
+            height: 580px;
+            border-radius: 24px;
+            border: 2px solid rgba(0,234,255,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            margin-top: 35px;
+        }
+        .map-title {
+            text-align: center;
+            font-size: 28px;
+            color: var(--secondary);
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px rgba(255,215,0,0.4);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 991px) {
+            .sidebar { right: -280px; }
+            .sidebar.open { right: 0; }
+            .main-content { margin-right: 0; padding: 60px 25px; }
+            .menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">DeepAncestry™<span>ADMIXLAB</span></div>
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i> الرئيسية</a></li>
+            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a></li>
+            <li><a href="/upload_page"><i class="fas fa-upload"></i> رفع ملف DNA</a></li>
+            <li><a href="/results/{{ kit_id }}"><i class="fas fa-dna"></i> نتائجي</a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <h1>مرحباً، {{ user_name }}!</h1>
+        <p style="text-align:center; opacity:0.9; font-size:1.4rem; margin-bottom:50px;">
+            اكتشف أصولك الحقيقية بأدق التحليلات الجينية العالمية
+        </p>
+
+        <div class="cards">
+            <div class="card">
+                <h3>تحليل جديد</h3>
+                <p style="margin:20px 0; line-height:1.7;">
+                    ارفع ملف DNA الخام الآن للحصول على:<br>
+                    • إحداثيات G25 كاملة<br>
+                    • نسب Admixture صادقة<br>
+                    • PCA + Heatmap جيني
+                </p>
+                <a href="/upload_page" class="btn">رفع ملف DNA الآن</a>
+            </div>
+
+            <div class="card">
+                <h3>هوية العينة الحالية</h3>
+                <p style="font-size:1.3rem; margin:20px 0;">
+                    كيت رقم: <span class="kit-id">{{ kit_id }}</span>
+                </p>
+                {% if kit_id != "لا يوجد تحليل بعد" %}
+                    <p class="status-complete">
+                        <i class="fas fa-check-circle"></i> التحليل اكتمل بنجاح
+                    </p>
+                {% else %}
+                    <p style="color:var(--error); font-size:1.2rem;">
+                        <i class="fas fa-exclamation-triangle"></i> لا يوجد تحليل حالي
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if latest_result and latest_result != "لا توجد نتائج بعد" %}
+            <div class="card">
+                <h3>أحدث نتائج التحليل</h3>
+                <div class="result-box" id="resultContent">
+                    {{ latest_result }}
+                </div>
+                <button onclick="copyToClipboard()" class="btn" style="margin-top:20px;">
+                    <i class="fas fa-copy"></i> نسخ الإحداثيات
+                </button>
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <h2 class="map-title">خريطة التوزيع الجيني الحراري (Heatmap)</h2>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script>
+        // === Heatmap على الخريطة ===
+        const heatPoints = {{ heat_points | tojson | safe }};
+        const map = L.map('map').setView([33.5, 36.3], 5);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
+
+        if (heatPoints && heatPoints.length > 0) {
+            L.heatLayer(heatPoints, {
+                radius: 45,
+                blur: 30,
+                maxZoom: 6,
+                gradient: {0.2: '#00d4ff', 0.5: '#ffd700', 0.8: '#ff4444', 1.0: '#ff0000'}
+            }).addTo(map);
+
+            const bounds = L.latLngBounds(heatPoints.map(p => [p[0], p[1]]));
+            map.fitBounds(bounds, {padding: [60, 60]});
+        }
+
+        // === نسخ النتائج ===
+        function copyToClipboard() {
+            const text = document.getElementById('resultContent').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('تم نسخ النتائج إلى الحافظة!');
+            });
+        }
+
+        // === Mobile sidebar close on link click ===
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.add('closed');
+            });
+        });
+    </script>
+</body>
+</html>

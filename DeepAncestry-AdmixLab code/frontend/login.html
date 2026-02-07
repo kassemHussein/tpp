@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول | DeepAncestry™ AdmixLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00eaff;
+            --secondary: #ffd700;
+            --dark: #0f0c29;
+            --card-bg: rgba(255,255,255,0.08);
+            --success: #00ff88;
+            --error: #ff6b6b;
+            --glow: 0 0 30px rgba(0,234,255,0.6);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark), #0a0720);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            border-radius: 35px;
+            padding: 60px 40px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(0,212,255,0.25);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.7);
+            text-align: center;
+        }
+        h1 {
+            font-size: 48px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 30px;
+            text-shadow: var(--glow);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        input[type="email"], input[type="password"] {
+            padding: 18px 25px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: right;
+            transition: 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: var(--glow);
+            background: rgba(255,255,255,0.1);
+        }
+        button {
+            padding: 18px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #000;
+            font-weight: 900;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.4s;
+            box-shadow: 0 10px 40px rgba(0,212,255,0.4);
+        }
+        button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 50px rgba(0,212,255,0.6);
+        }
+        .flash {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: 700;
+        }
+        .flash.error { background: rgba(255,107,107,0.15); color: var(--error); border: 1px solid var(--error); }
+        .flash.success { background: rgba(0,255,136,0.15); color: var(--success); border: 1px solid var(--success); }
+        .links { margin-top: 35px; font-size: 1.1rem; }
+        .links a { color: var(--primary); text-decoration: none; transition: 0.3s; }
+        .links a:hover { color: var(--secondary); text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DeepAncestry™</h1>
+        <p style="font-size:22px; margin-bottom:40px; opacity:0.85;">مرحباً بك مجدداً</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <input type="email" name="email" placeholder="البريد الإلكتروني" required autofocus>
+            <input type="password" name="password" placeholder="كلمة المرور" required>
+
+            <button type="submit">دخول إلى المختبر</button>
+        </form>
+
+        <div class="links">
+            <p>لا تملك حساباً؟ <a href="{{ url_for('register') }}">انضم إلينا الآن</a></p>
+            <p style="margin-top: 15px;"><a href="{{ url_for('index') }}"><i class="fas fa-arrow-right"></i> العودة للرئيسية</a></p>
+        </div>
+    </div>
+</body>
+</html>

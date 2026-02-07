@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-key="title">DeepAncestry™ AdmixLab – أبو عبد الرحمن شريف</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --p: #00d4ff;
+            --g: #ffd700;
+            --d: #0b0825;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: radial-gradient(circle at top right, #1a154d, var(--d));
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: clamp(70px, 10vh, 90px);
+            background: rgba(11, 8, 37, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 6%; z-index: 9999;
+        }
+
+        .logo {
+            font-size: clamp(24px, 5vw, 38px);
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--p), var(--g));
+            -webkit-background-clip: text; color: transparent;
+        }
+
+        .logo span {
+            font-size: 0.5em; color: var(--g);
+            display: block; letter-spacing: 1px;
+        }
+
+        /* Language Toggle - Floating Style */
+        .lang-toggle {
+            display: flex; gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px; border-radius: 50px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .flag {
+            width: 32px; height: 22px; border-radius: 4px;
+            cursor: pointer; transition: 0.3s ease; opacity: 0.5;
+        }
+
+        .flag:hover { opacity: 1; transform: scale(1.1); }
+        .flag.active {
+            opacity: 1; transform: scale(1.2);
+            box-shadow: 0 0 15px var(--p);
+            border: 1px solid #fff;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: clamp(120px, 15vh, 200px) 6% 60px;
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(34px, 8vw, 78px);
+            font-weight: 900; line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(to bottom, #fff, var(--p), var(--g));
+            -webkit-background-clip: text; color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(18px, 3vw, 28px);
+            max-width: 1000px; margin-bottom: 40px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .founder-box {
+            background: rgba(255, 215, 0, 0.04);
+            padding: 30px; border-radius: 24px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            margin-bottom: 50px; width: 100%; max-width: 700px;
+        }
+
+        .founder-box strong { color: var(--g); font-size: 1.4rem; display: block; margin-bottom: 10px; }
+        .founder-box a { color: var(--p); text-decoration: none; font-weight: bold; }
+
+        .btn-main {
+            display: inline-block;
+            font-size: clamp(20px, 4vw, 30px);
+            padding: 20px 60px;
+            background: linear-gradient(45deg, var(--p), var(--g));
+            color: #000; border-radius: 50px;
+            font-weight: 900; text-decoration: none;
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.3);
+            transition: 0.4s;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Grid Layouts */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; padding: 60px 6%; max-width: 1400px; margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 40px 25px; border-radius: 28px;
+            border: 1px solid var(--border-glass);
+            text-align: center; transition: 0.4s;
+        }
+
+        .card:hover {
+            border-color: var(--p);
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .card h3 { color: var(--g); font-size: 26px; margin-bottom: 15px; }
+
+        /* Evolution Section */
+        .evolution-title {
+            text-align: center; font-size: clamp(28px, 6vw, 55px);
+            margin: 80px 0 40px; color: var(--p);
+        }
+
+        .evo-card {
+            position: relative; border-radius: 24px; overflow: hidden;
+            background: #000; border: 1px solid var(--border-glass);
+        }
+
+        .evo-card img {
+            width: 100%; height: 280px; object-fit: cover;
+            opacity: 0.6; transition: 0.6s;
+        }
+
+        .evo-card:hover img { opacity: 0.9; transform: scale(1.05); }
+
+        .evo-content { padding: 25px; text-align: center; }
+        .evo-content h3 { color: var(--g); margin-bottom: 10px; }
+
+        .badge {
+            position: absolute; top: 15px; left: 15px;
+            background: var(--p); color: #000;
+            padding: 6px 15px; border-radius: 10px;
+            font-weight: 900; z-index: 5;
+        }
+
+        footer {
+            padding: 60px 6%; text-align: center;
+            border-top: 1px solid var(--border-glass);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* LTR Fix for English */
+        [dir="ltr"] .badge { left: auto; right: 15px; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0 4%; }
+            .grid-container { gap: 20px; }
+            .hero { padding-top: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo" data-key="logo_main">DeepAncestry™<span data-key="logo_sub">AdmixLab</span></div>
+        
+        <div class="lang-toggle">
+            <img src="https://flagcdn.com/w80/sa.png" alt="Ar" class="flag active" onclick="setLanguage('ar')">
+            <img src="https://flagcdn.com/w80/gb.png" alt="En" class="flag" onclick="setLanguage('en')">
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <h1 data-key="main_title">اكتشف أصولك العميقة<br>بأدق تقنيات العلم</h1>
+            <p data-key="subtitle">تحليل DNA بتقنية qpAdm و Admixture والخرائط التفاعلية</p>
+            
+            <div class="founder-box">
+                <strong data-key="founder">مؤسس ومطور الموقع:</strong>
+                <span data-key="founder_name" style="font-size: 1.2rem; font-weight: 700;">أبو عبد الرحمن شريف | TPP</span><br>
+                <a href="https://x.com/mama1214640613" target="_blank">@mama1214640613</a>
+            </div>
+
+            <a href="/register" class="btn-main" data-key="start_now">ابدأ رحلتك الآن مجاناً</a>
+        </section>
+
+        <div class="grid-container">
+            <div class="card">
+                <h3 data-key="feature1_title">تحليل K=20</h3>
+                <p data-key="feature1_desc">أدق نتائج تحليل غير مشرف باستخدام أحدث قواعد البيانات العالمية.</p>
+            </div>
+            <div class="card">
+                <h3 data-key="feature2_title">خرائط تفاعلية</h3>
+                <p data-key="feature2_desc">شاهد توزيع أسلافك الجيني على خريطة العالم بدقة عالية.</p>
+            </div>
+            <div class="card">
+                <h3 data-key="feature3_title">الحضارات القديمة</h3>
+                <p data-key="feature3_desc">اكتشف قربك الجيني من الفراعنة، السومريين، والكنعانيين.</p>
+            </div>
+        </div>
+
+        <h2 class="evolution-title" data-key="evolution_title">رحلة التطور البشري</h2>
+        <div class="grid-container">
+            <div class="evo-card">
+                <span class="badge" data-key="year_natufian">~12,500 BC</span>
+                <img src="https://substackcdn.com/image/fetch/f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F91654995-8eb8-46db-9004-a6dfd08d9730_800x533.jpeg" alt="Natufians">
+                <div class="evo-content">
+                    <h3 data-key="period_natufian">الناطوفيون</h3>
+                    <p data-key="desc_natufian">أوائل من استقر في بلاد الشام وبدأوا الزراعة.</p>
+                </div>
+            </div>
+            <div class="evo-card">
+                <span class="badge" data-key="year_bronze">~3000 BC</span>
+                <img src="https://brewminate.com/wp-content/uploads/2025/07/072225-19-Gaza-History.jpg" alt="Bronze Age">
+                <div class="evo-content">
+                    <h3 data-key="period_bronze">العصر البرونزي</h3>
+                    <p data-key="desc_bronze">فترة ازدهار المدن الكنعانية والفينيقية القديمة.</p>
+                </div>
+            </div>
+            <div class="evo-card">
+                <span class="badge" data-key="year_today">2025 AD</span>
+                <img src="https://thumbs.dreamstime.com/b/traditional-middle-eastern-market-scene-authentic-colorful-spices-lanterns-vibrant-alleyway-411683682.jpg" alt="Modern">
+                <div class="evo-content">
+                    <h3 data-key="period_today">العصر الحديث</h3>
+                    <p data-key="desc_today">استمرارية التراث الجيني العريق في شعوب اليوم.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p data-key="copyright">© 2025 DeepAncestry™ AdmixLab</p>
+        <p style="color:var(--g); margin-top:10px; font-weight:900;">Powered by Abu Abdulrahman Sharif | TPP</p>
+    </footer>
+
+    <script>
+        const translations = {
+            ar: {
+                title: "DeepAncestry™ AdmixLab – أبو عبد الرحمن شريف",
+                logo_main: "DeepAncestry™", logo_sub: "AdmixLab",
+                main_title: "اكتشف أصولك العميقة<br>بأدق تقنيات العلم الحديث",
+                subtitle: "تحليل DNA بتقنية qpAdm + PLINK + Admixture وخرائط تفاعلية",
+                founder: "مؤسس ومطور الموقع:",
+                founder_name: "أبو عبد الرحمن شريف | TPP",
+                start_now: "ابدأ رحلتك الآن مجاناً",
+                feature1_title: "تحليل K=20",
+                feature1_desc: "أدق نتائج تحليل غير مشرف باستخدام أحدث قواعد البيانات العالمية.",
+                feature2_title: "خرائط تفاعلية",
+                feature2_desc: "شاهد توزيع أسلافك الجيني على خريطة العالم بدقة عالية.",
+                feature3_title: "الحضارات القديمة",
+                feature3_desc: "اكتشف قربك الجيني من الفراعنة، السومريين، والكنعانيين.",
+                evolution_title: "رحلة التطور البشري عبر العصور",
+                year_natufian: "~12,500 ق.م",
+                period_natufian: "الناطوفيون",
+                desc_natufian: "أوائل من استقر في بلاد الشام وبدأوا الزراعة.",
+                year_bronze: "~3000 ق.م",
+                period_bronze: "العصر البرونزي",
+                desc_bronze: "فترة ازدهار المدن الكنعانية والفينيقية القديمة.",
+                year_today: "2025 م",
+                period_today: "العصر الحديث",
+                desc_today: "استمرارية التراث الجيني العريق في شعوب اليوم.",
+                copyright: "© 2025 DeepAncestry™ AdmixLab"
+            },
+            en: {
+                title: "DeepAncestry™ AdmixLab – Abu Abdulrahman Sharif",
+                logo_main: "DeepAncestry™", logo_sub: "AdmixLab",
+                main_title: "Discover Your Deep Ancestry<br>With Cutting-Edge Science",
+                subtitle: "DNA Analysis with qpAdm, Admixture, and Interactive Maps",
+                founder: "Founder & Developer:",
+                founder_name: "Abu Abdulrahman Sharif | TPP",
+                start_now: "Start Your Journey Free",
+                feature1_title: "K=20 Analysis",
+                feature1_desc: "Most accurate unsupervised results using global databases.",
+                feature2_title: "Interactive Maps",
+                feature2_desc: "Visualize your genetic ancestry distribution worldwide.",
+                feature3_title: "Ancient History",
+                feature3_desc: "Compare your DNA with Pharaohs, Sumerians, and Canaanites.",
+                evolution_title: "Human Evolution Through Ages",
+                year_natufian: "~12,500 BC",
+                period_natufian: "Natufians",
+                desc_natufian: "First settled communities in the Levant who began farming.",
+                year_bronze: "~3000 BC",
+                period_bronze: "Bronze Age",
+                desc_bronze: "Flourishing period of ancient Canaanite and Phoenician cities.",
+                year_today: "2025 AD",
+                period_today: "Modern Era",
+                desc_today: "The continuity of ancient genetic heritage in today's people.",
+                copyright: "© 2025 DeepAncestry™ AdmixLab"
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.title = translations[lang].title;
+
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('.flag').forEach(f => f.classList.remove('active'));
+            document.querySelector(`.flag[onclick="setLanguage('${lang}')"]`).classList.add('active');
+            localStorage.setItem('user_lang', lang);
+        }
+
+        setLanguage(localStorage.getItem('user_lang') || 'ar');
+    </script>
+</body>
+</html>

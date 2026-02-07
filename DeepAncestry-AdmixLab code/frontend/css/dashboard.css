@@ -1,0 +1,11 @@
+body { direction: rtl; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #fff; }
+.sidebar { position: fixed; top: 0; right: 0; width: 280px; height: 100vh; background: rgba(0,0,0,0.7); padding: 30px; z-index: 1000; }
+.logo { font-size: 32px; color: #00d4ff; text-align: center; margin-bottom: 50px; }
+.sidebar ul { list-style: none; }
+.sidebar a { display: block; padding: 15px; color: #ccc; text-decoration: none; border-radius: 12px; margin: 8px 0; transition: 0.3s; }
+.sidebar a:hover { background: rgba(0,212,255,0.2); color: #00d4ff; }
+.main-content { margin-right: 300px; padding: 40px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin: 40px 0; }
+.card { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; text-align: center; }
+.btn { display: inline-block; margin-top: 20px; padding: 12px 30px; background: linear-gradient(45deg, #0066ff, #00d4ff); border-radius: 50px; color: white; text-decoration: none; }
+.upload-box { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; text-align: center; }

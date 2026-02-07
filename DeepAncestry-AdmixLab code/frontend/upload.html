@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفع ملف DNA | DeepAncestry™ AdmixLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ffd700;
+            --dark: #0f0c29;
+            --card-bg: rgba(255,255,255,0.08);
+            --success: #00ff88;
+            --error: #ff6b6b;
+            --glow: 0 0 30px rgba(0,212,255,0.7);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark), #0a0720);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 30px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 700px;
+            border: 1px solid rgba(0,212,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        h1 {
+            font-size: 42px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 15px;
+        }
+        p.subtitle {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 35px;
+        }
+        .drop-zone {
+            border: 4px dashed var(--primary);
+            border-radius: 20px;
+            padding: 80px 30px;
+            margin: 30px 0;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            background: rgba(0,212,255,0.08);
+            position: relative;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(0,212,255,0.2);
+            border-color: var(--secondary);
+            box-shadow: var(--glow);
+            transform: scale(1.03);
+        }
+        .drop-zone p {
+            font-size: 22px;
+            margin: 12px 0;
+        }
+        .file-info {
+            margin-top: 25px;
+            font-size: 18px;
+            color: #ddd;
+            word-break: break-all;
+        }
+        .progress-container {
+            margin: 40px 0;
+            display: none;
+        }
+        .progress-bar {
+            height: 16px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        }
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s ease;
+            position: relative;
+        }
+        .progress::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .status {
+            margin-top: 25px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .success { color: var(--success); }
+        .error { color: var(--error); }
+        button {
+            padding: 18px 50px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.4s;
+        }
+        button:hover {
+            transform: scale(1.08);
+            box-shadow: var(--glow);
+        }
+        .back-link {
+            margin-top: 40px;
+            font-size: 18px;
+        }
+        .back-link a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .back-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DeepAncestry™</h1>
+        <p class="subtitle">رفع ملف DNA الخام (23andMe, Ancestry, MyHeritage...)</p>
+
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}  <!-- CSRF token مهم جدًا -->
+
+            <div class="drop-zone" id="dropZone">
+                <i class="fas fa-cloud-upload-alt" style="font-size:60px; color:var(--primary); margin-bottom:20px;"></i>
+                <p>اسحب ملف DNA هنا أو اضغط للاختيار</p>
+                <p style="font-size:16px; opacity:0.7;">الملفات المسموحة: .txt, .csv, .zip (حتى 10 جيجا)</p>
+                <input type="file" id="fileInput" name="dna_file" accept=".txt,.csv,.zip" hidden>
+            </div>
+
+            <div class="file-info" id="fileInfo"></div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <p class="status" id="statusText">جاري الرفع...</p>
+            </div>
+
+            <button type="submit">رفع وتحليل الملف</button>
+        </form>
+
+        <p class="back-link"><a href="{{ url_for('dashboard') }}">العودة إلى اللوحة</a></p>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const form = document.getElementById('uploadForm');
+
+        // Drag & Drop
+        ['dragover', 'dragenter'].forEach(event => dropZone.addEventListener(event, e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        }));
+
+        ['dragleave', 'drop'].forEach(event => dropZone.addEventListener(event, e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        }));
+
+        dropZone.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length) handleFile(files[0]);
+        });
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            const allowed = ['txt', 'csv', 'zip'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!allowed.includes(ext)) {
+                statusText.textContent = 'نوع الملف غير مدعوم! (مسموح: txt, csv, zip)';
+                statusText.className = 'status error';
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024 * 1024) {  // 10GB
+                statusText.textContent = 'الملف كبير جدًا (الحد الأقصى 10 جيجا)';
+                statusText.className = 'status error';
+                return;
+            }
+
+            fileInfo.textContent = `الملف المختار: ${file.name} (${(file.size / (1024*1024*1024)).toFixed(2)} GB)`;
+            statusText.textContent = 'جاهز للرفع – اضغط الزر أدناه!';
+            statusText.className = 'status success';
+        }
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (!fileInput.files.length) {
+                statusText.textContent = 'اختر ملف أولاً!';
+                statusText.className = 'status error';
+                return;
+            }
+
+            progressContainer.style.display = 'block';
+            statusText.textContent = 'جاري رفع الملف... (قد يستغرق وقتًا طويلًا للملفات الكبيرة)';
+            statusText.className = 'status';
+
+            const formData = new FormData(form);
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.onprogress = e => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    statusText.textContent = `جاري الرفع... ${percent}%`;
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            statusText.textContent = data.message;
+                            statusText.className = 'status success';
+                            progressBar.style.width = '100%';
+                            setTimeout(() => window.location.href = data.redirect, 2000);
+                        } else {
+                            statusText.textContent = data.message || 'حدث خطأ أثناء الرفع';
+                            statusText.className = 'status error';
+                        }
+                    } catch (err) {
+                        statusText.textContent = 'خطأ في معالجة الرد من الخادم';
+                        statusText.className = 'status error';
+                    }
+                } else {
+                    statusText.textContent = 'فشل الرفع (خطأ من الخادم)';
+                    statusText.className = 'status error';
+                }
+            };
+
+            xhr.onerror = () => {
+                statusText.textContent = 'فشل الاتصال بالخادم – تحقق من الإنترنت';
+                statusText.className = 'status error';
+            };
+
+            xhr.open('POST', '/upload', true);
+            xhr.send(formData);
+        });
+    </script>
+</body>
+</html>
